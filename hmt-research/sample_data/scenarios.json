@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Suspicious Network Traffic",
+    "category": "Incident Response",
+    "description": "Unusual outbound traffic detected",
+    "context": "Your SIEM has alerted on unusual outbound network traffic from a production web server to an IP in a foreign country.",
+    "decision_point": "What is your immediate response?",
+    "options": [
+      {"id": "A", "label": "Isolate Immediately", "description": "Disconnect the server from the network"},
+      {"id": "B", "label": "Monitor First", "description": "Continue monitoring while investigating"},
+      {"id": "C", "label": "Block Specific IP", "description": "Block only the suspicious connection"}
+    ]
+  }
+]

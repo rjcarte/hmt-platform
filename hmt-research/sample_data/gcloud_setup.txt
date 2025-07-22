@@ -1,0 +1,47 @@
+# 1. Install Google Cloud CLI (on Windows, use the installer)
+# https://cloud.google.com/sdk/docs/install
+
+# 2. Create new project
+gcloud projects create hmt-research --name="HMT Research Platform"
+gcloud config set project hmt-research
+
+# 3. Enable required APIs
+gcloud services enable \
+  run.googleapis.com \
+  cloudsql.googleapis.com \
+  secretmanager.googleapis.com \
+  storage-component.googleapis.com \
+  firebase.googleapis.com
+
+# 4. Set up billing (required for Cloud SQL)
+# Visit: https://console.cloud.google.com/billing
+
+# 5. Create Cloud SQL instance (optimized for $100/month budget)
+gcloud sql instances create hmt-platform-db \
+  --database-version=POSTGRES_15 \
+  --tier=db-f1-micro \
+  --region=us-central1 \
+  --network=default \
+  --backup \
+  --backup-start-time=03:00
+
+# 6. Create database and user
+gcloud sql databases create hmt_platform --instance=hmt-platform-db
+gcloud sql users create hmt_user --instance=hmt-platform-db --password=<secure-password>
+
+# 7. Create secrets
+echo -n "your-openai-api-key" | gcloud secrets create openai-key --data-file=-
+echo -n "postgresql://hmt_user:password@/hmt_platform?host=/cloudsql/hmt-research:us-central1:hmt-platform-db" | \
+  gcloud secrets create database-url --data-file=-
+
+# 8. Create storage bucket
+gsutil mb -l US gs://hmt-research-media
+
+# 9. Deploy to Cloud Run
+gcloud run deploy hmt-backend \
+  --source ./backend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars PROJECT_ID=hmt-research \
+  --set-secrets="DATABASE_URL=database-url:latest,OPENAI_API_KEY=openai-key:latest"
